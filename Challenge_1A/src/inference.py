@@ -142,39 +142,26 @@ def save_json(result, output_path):
 
 
 if __name__ == '__main__':
-    import sys
+    import sys, os
 
-    if len(sys.argv) < 3:
-        print("Usage:")
-        print("  python inference.py <input.pdf> <output.json>")
-        print("  — or —")
-        print("  python inference.py <input_dir> <output_dir> --batch")
-        sys.exit(1)
+    # Expect either single or batch mode
+    path_in, path_out = sys.argv[1], sys.argv[2]
+    batch = ("--batch" in sys.argv)
 
-    path_in  = sys.argv[1]
-    path_out = sys.argv[2]
-    batch    = ("--batch" in sys.argv)
+    booster = load_model("models/heading_model.txt")
+    # feature names loader already uses models/feature_names.json
 
-    booster    = load_model()
-    
     if batch:
-        # Ensure output directory exists
         os.makedirs(path_out, exist_ok=True)
-
-        # Process every .pdf in the input directory
         for fname in sorted(os.listdir(path_in)):
             if not fname.lower().endswith(".pdf"):
                 continue
-            pdf_path = os.path.join(path_in, fname)
-            base     = os.path.splitext(fname)[0]
-            json_path = os.path.join(path_out, f"{base}_outline.json")
-
-            print(f"▶️  Processing {fname} → {base}_outline.json")
-            result = process_pdf(pdf_path, booster)
-            save_json(result, json_path)
-
+            in_pdf  = os.path.join(path_in, fname)
+            base    = os.path.splitext(fname)[0]
+            out_json= os.path.join(path_out, f"{base}_outline.json")
+            print(f"▶ Processing {fname}")
+            result = process_pdf(in_pdf, booster)
+            save_json(result, out_json)
     else:
-        # Single‑file mode
         result = process_pdf(path_in, booster)
         save_json(result, path_out)
-
